@@ -7,12 +7,13 @@ import net.proteanit.sql.DbUtils;
 import java.sql.*;
 import java.awt.event.*;
 
-public class BookDetails extends JFrame implements ActionListener{
+public class BookDetails extends JFrame implements ActionListener {
 
 	private JPanel contentPane;
 	private JTable table;
 	private JTextField search;
-	private JButton b1, b2, b3;
+	private JButton b1, b2;
+	private JComboBox<String> genreComboBox; // ComboBox for genres
 
 	public static void main(String[] args) {
 		new BookDetails().setVisible(true);
@@ -98,6 +99,12 @@ public class BookDetails extends JFrame implements ActionListener{
 		contentPane.add(search);
 		search.setColumns(10);
 
+		// Add a ComboBox for genre filtering
+		genreComboBox = new JComboBox<>(new String[]{"All Genres", "Fiction", "Dystopian", "Classic", "Adventure", "Romance", "Literary Fiction", "Fantasy", "Science Fiction"});
+		genreComboBox.setBounds(189, 55, 357, 33);
+		genreComboBox.setFont(new Font("Trebuchet MS", Font.BOLD | Font.ITALIC, 17));
+		contentPane.add(genreComboBox);
+
 		JLabel l3 = new JLabel("Back");
 		l3.addMouseListener(new MouseAdapter() {
 			@Override
@@ -128,11 +135,25 @@ public class BookDetails extends JFrame implements ActionListener{
 	public void actionPerformed(ActionEvent ae) {
 		try (Connection conn = DatabaseConnection.getConnection()) {
 			if (ae.getSource() == b1) {
-				String sql = "SELECT * FROM Books WHERE CONCAT(title, id) LIKE ?";
-				PreparedStatement st = conn.prepareStatement(sql);
-				st.setString(1, "%" + search.getText() + "%");
-				ResultSet rs = st.executeQuery();
+				String genre = genreComboBox.getSelectedItem().toString();
+				String sql;
 
+				if (genre.equals("All Genres")) {
+					sql = "SELECT * FROM Books WHERE CONCAT(title, id) LIKE ?";
+				} else {
+					sql = "SELECT * FROM Books WHERE genre = ? AND CONCAT(title, id) LIKE ?";
+				}
+
+				PreparedStatement st = conn.prepareStatement(sql);
+
+				if (genre.equals("All Genres")) {
+					st.setString(1, "%" + search.getText() + "%");
+				} else {
+					st.setString(1, genre);
+					st.setString(2, "%" + search.getText() + "%");
+				}
+
+				ResultSet rs = st.executeQuery();
 				table.setModel(DbUtils.resultSetToTableModel(rs));
 				rs.close();
 				st.close();

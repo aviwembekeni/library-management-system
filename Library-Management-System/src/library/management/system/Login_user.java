@@ -4,120 +4,160 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.sql.*;
+import java.util.regex.Pattern;
 
-public class Login_user extends JFrame implements ActionListener{
+public class Login_user extends JFrame implements ActionListener {
 
-	private JPanel panel;
-	private JTextField textField;
-	private JPasswordField passwordField;
-        private JButton b1,b2,b3;
+    private JTextField textField;
+    private JPasswordField passwordField;
+    private JButton b1, b2, b3;
 
-
-	public Login_user() {
-
-	setBackground(new Color(169, 169, 169));
+    public Login_user() {
+        setTitle("Login");
         setBounds(600, 300, 600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new GridLayout(1, 2)); // Split the frame into two columns
 
-        panel = new JPanel();
-	panel.setBackground(new Color(176, 224, 230));
-	setContentPane(panel);
-	panel.setLayout(null);
+        // Create the left panel
+        JPanel leftPanel = new JPanel();
+        leftPanel.setBackground(new Color(245, 245, 220)); // Beige background
+        leftPanel.setLayout(null);
 
-	JLabel l1 = new JLabel("Username : ");
-	l1.setBounds(124, 89, 95, 24);
-	panel.add(l1);
+        // Create the right panel
+        JPanel rightPanel = new JPanel();
+        rightPanel.setBackground(new Color(245, 245, 220)); // Beige background
+        rightPanel.setLayout(null);
 
-	JLabel l2 = new JLabel("Password : ");
-	l2.setBounds(124, 124, 95, 24);
-	panel.add(l2);
+        // Add components to the left panel
+        JLabel l1 = new JLabel("Username : ");
+        l1.setBounds(50, 80, 95, 24);
+        leftPanel.add(l1);
 
-	textField = new JTextField();
-	textField.setBounds(210, 93, 157, 20);
-	panel.add(textField);
+        JLabel l2 = new JLabel("Password : ");
+        l2.setBounds(50, 115, 95, 24);
+        leftPanel.add(l2);
 
-	passwordField = new JPasswordField();
-	passwordField.setBounds(210, 128, 157, 20);
-	panel.add(passwordField);
+        textField = new JTextField();
+        textField.setBounds(150, 80, 200, 24);
+        leftPanel.add(textField);
 
-	JLabel l3 = new JLabel("");
-	l3.setBounds(377, 79, 46, 34);
-	panel.add(l3);
+        passwordField = new JPasswordField();
+        passwordField.setBounds(150, 115, 200, 24);
+        leftPanel.add(passwordField);
 
-	JLabel l4 = new JLabel("");
-	l4.setBounds(377, 124, 46, 34);
-	panel.add(l3);
-
-	b1 = new JButton("Login");
-	b1.addActionListener(this);
-
-	b1.setForeground(new Color(46, 139, 87));
-	b1.setBackground(new Color(250, 250, 210));
-	b1.setBounds(149, 181, 113, 39);
-	panel.add(b1);
+        b1 = new JButton("Login");
+        b1.addActionListener(this);
+        b1.setForeground(Color.WHITE); // White text
+        b1.setBackground(Color.BLACK); // Black background
+        b1.setBounds(50, 170, 100, 30);
+        leftPanel.add(b1);
 
         b2 = new JButton("SignUp");
-	b2.addActionListener(this);
+        b2.addActionListener(this);
+        b2.setForeground(Color.WHITE); // White text
+        b2.setBackground(Color.BLACK); // Black background
+        b2.setBounds(170, 170, 100, 30);
+        leftPanel.add(b2);
 
-	b2.setForeground(new Color(139, 69, 19));
-	b2.setBackground(new Color(255, 235, 205));
-	b2.setBounds(289, 181, 113, 39);
-	panel.add(b2);
+        b3 = new JButton("Forgot Password");
+        b3.addActionListener(this);
+        b3.setForeground(Color.WHITE); // White text
+        b3.setBackground(Color.BLACK); // Black background
+        b3.setBounds(50, 220, 220, 30);
+        leftPanel.add(b3);
 
-	b3 = new JButton("Forgot Password");
-	b3.addActionListener(this);
+        JLabel l5 = new JLabel("Trouble in Login?");
+        l5.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        l5.setBounds(50, 260, 150, 20);
+        leftPanel.add(l5);
 
-        b3.setForeground(new Color(205, 92, 92));
-	b3.setBackground(new Color(253, 245, 230));
-	b3.setBounds(199, 231, 179, 39);
-	panel.add(b3);
+        // Add components to the right panel
+        JLabel l6 = new JLabel("Welcome to the Library Management System");
+        l6.setBounds(20, 100, 300, 50);
+        rightPanel.add(l6);
 
-	JLabel l5 = new JLabel("Trouble in Login?");
-	l5.setFont(new Font("Tahoma", Font.PLAIN, 15));
-	l5.setForeground(new Color(255, 0, 0));
-	l5.setBounds(70, 240, 130, 20);
-	panel.add(l5);
+        // Add panels to the frame
+        add(leftPanel);
+        add(rightPanel);
+    }
 
-		JPanel panel2 = new JPanel();
-		panel2.setBackground(new Color(176, 224, 230));
-		panel2.setBounds(24, 40, 434, 263);
-		panel.add(panel2);
-	}
-
-        public void actionPerformed(ActionEvent ae){
-            if(ae.getSource() == b1){
-                Boolean status = false;
-		try {
-                    Connection con = DatabaseConnection.getConnection();
-                    String sql = "select * from Admins where email=? and password=?";
-                    PreparedStatement st = con.prepareStatement(sql);
-
+    public void actionPerformed(ActionEvent ae) {
+        if (ae.getSource() == b1) {
+            if (validateInput()) {  // Added validation check
+                boolean status = false;
+                Connection conn = null;
+                PreparedStatement st = null;
+                ResultSet rs = null;
+                try {
+                    conn = DatabaseConnection.getConnection();
+                    String sql = "SELECT * FROM Admins WHERE email=? AND password=?";
+                    st = conn.prepareStatement(sql);
                     st.setString(1, textField.getText());
-                    st.setString(2, passwordField.getText());
+                    st.setString(2, new String(passwordField.getPassword()));
 
-                    ResultSet rs = st.executeQuery();
+                    rs = st.executeQuery();
+
                     if (rs.next()) {
                         this.setVisible(false);
                         new Loading().setVisible(true);
-                    } else
-			JOptionPane.showMessageDialog(null, "Invalid Login...!.");
-
-		} catch (Exception e2) {
-                    e2.printStackTrace();
-		}
-            }
-            if(ae.getSource() == b2){
-                setVisible(false);
-		Signup su = new Signup();
-		su.setVisible(true);
-            }
-            if(ae.getSource() == b3){
-                setVisible(false);
-//
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Invalid Login...!.");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (rs != null) rs.close();
+                        if (st != null) st.close();
+                        if (conn != null) conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
+        if (ae.getSource() == b2) {
+            setVisible(false);
+            Signup su = new Signup();
+            su.setVisible(true);
+        }
+        if (ae.getSource() == b3) {
+            setVisible(false);
+            // Uncomment and implement the Forgot password functionality if needed
+            // Forgot forgot = new Forgot();
+            // forgot.setVisible(true);
+        }
+    }
 
-  	public static void main(String[] args) {
-                new Login_user().setVisible(true);
-	}
+    private boolean validateInput() {  // Validation method
+        String userEmail = textField.getText().trim();
+        String userPassword = new String(passwordField.getPassword()).trim();
 
+        if (userEmail.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Username cannot be empty", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        if (!isValidEmail(userEmail)) {  // Email validation
+            JOptionPane.showMessageDialog(this, "Invalid email format", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        if (userPassword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Password cannot be empty", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean isValidEmail(String email) {  // Email validation method
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        Pattern pat = Pattern.compile(emailRegex);
+        return pat.matcher(email).matches();
+    }
+
+    public static void main(String[] args) {
+        new Login_user().setVisible(true);
+    }
 }
