@@ -162,7 +162,7 @@ public class BookDetails extends JFrame implements ActionListener{
 					if (transCount > 0) {
 						JOptionPane.showMessageDialog(null, "Cannot delete the book as it is referenced in Transactions.");
 					} else {
-						if (quantity > 0) {
+						if (quantity > 0 && available > 0) {
 							// Decrement quantity
 							String sqlUpdate = "UPDATE Books SET quantity = ?, available = ? WHERE title = ?";
 							PreparedStatement stUpdate = conn.prepareStatement(sqlUpdate);

@@ -128,8 +128,7 @@ public class StudentDetails extends JFrame implements ActionListener {
 	}
 
 	public void actionPerformed(ActionEvent ae) {
-		try {
-			Connection conn = DatabaseConnection.getConnection();
+		try (Connection conn = DatabaseConnection.getConnection()) {
 			if (ae.getSource() == b1) {
 				String sql = "SELECT * FROM Students WHERE CONCAT(name, id) LIKE ?";
 				PreparedStatement st = conn.prepareStatement(sql);
@@ -142,62 +141,43 @@ public class StudentDetails extends JFrame implements ActionListener {
 			}
 
 			if (ae.getSource() == b2) {
-				String bookTitle = search.getText();
-				String sqlCheck = "SELECT quantity, available, id FROM Students WHERE name = ?";
+				String studentName = search.getText();
+				String sqlCheck = "SELECT id FROM Students WHERE name = ?";
 				PreparedStatement stCheck = conn.prepareStatement(sqlCheck);
-				stCheck.setString(1, bookTitle);
+				stCheck.setString(1, studentName);
 				ResultSet rsCheck = stCheck.executeQuery();
 
 				if (rsCheck.next()) {
-					int quantity = rsCheck.getInt("quantity");
-					int available = rsCheck.getInt("available");
-					int bookId = rsCheck.getInt("id");
+					int studentId = rsCheck.getInt("id");
 
 					// Check for related transactions
-					String sqlTransCheck = "SELECT COUNT(*) FROM Transactions WHERE book_id = ?";
+					String sqlTransCheck = "SELECT COUNT(*) FROM transactions WHERE student_id = ?";
 					PreparedStatement stTransCheck = conn.prepareStatement(sqlTransCheck);
-					stTransCheck.setInt(1, bookId);
+					stTransCheck.setInt(1, studentId);
 					ResultSet rsTransCheck = stTransCheck.executeQuery();
 
 					rsTransCheck.next();
 					int transCount = rsTransCheck.getInt(1);
 
 					if (transCount > 0) {
-						JOptionPane.showMessageDialog(null, "Cannot delete the book as it is referenced in Transactions.");
+						JOptionPane.showMessageDialog(null, "Cannot delete the student as there are related transactions.");
 					} else {
-						if (quantity > 0) {
-							String sqlUpdate = "UPDATE Students SET quantity = ?, available = ? WHERE name = ?";
-							PreparedStatement stUpdate = conn.prepareStatement(sqlUpdate);
-							stUpdate.setInt(1, quantity - 1);
-							stUpdate.setInt(2, available - 1);
-							stUpdate.setString(3, bookTitle);
-							stUpdate.executeUpdate();
-							stUpdate.close();
-
-							if (quantity - 1 == 0) {
-								String sqlDelete = "DELETE FROM Students WHERE name = ?";
-								PreparedStatement stDelete = conn.prepareStatement(sqlDelete);
-								stDelete.setString(1, bookTitle);
-								stDelete.executeUpdate();
-								stDelete.close();
-								JOptionPane.showMessageDialog(null, "Book removed completely as quantity reached zero!");
-							} else {
-								JOptionPane.showMessageDialog(null, "Book quantity decremented by one.");
-							}
-						} else {
-							JOptionPane.showMessageDialog(null, "No books available for deletion.");
-						}
+						// Delete the student
+						String sqlDelete = "DELETE FROM Students WHERE name = ?";
+						PreparedStatement stDelete = conn.prepareStatement(sqlDelete);
+						stDelete.setString(1, studentName);
+						stDelete.executeUpdate();
+						stDelete.close();
+						JOptionPane.showMessageDialog(null, "Student deleted successfully.");
 					}
 					rsTransCheck.close();
 					stTransCheck.close();
 				} else {
-					JOptionPane.showMessageDialog(null, "Book not found.");
+					JOptionPane.showMessageDialog(null, "Student not found.");
 				}
-
 				rsCheck.close();
 				stCheck.close();
 			}
-			conn.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

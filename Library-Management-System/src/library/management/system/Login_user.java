@@ -4,7 +4,6 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.sql.*;
-import java.util.Arrays;
 
 public class Login_user extends JFrame implements ActionListener{
 
@@ -56,7 +55,7 @@ public class Login_user extends JFrame implements ActionListener{
 	b1.setBounds(149, 181, 113, 39);
 	panel.add(b1);
 
-    b2 = new JButton("SignUp");
+        b2 = new JButton("SignUp");
 	b2.addActionListener(this);
 
 	b2.setForeground(new Color(139, 69, 19));
@@ -86,38 +85,25 @@ public class Login_user extends JFrame implements ActionListener{
 
         public void actionPerformed(ActionEvent ae){
             if(ae.getSource() == b1){
-                boolean status = false;
-                Connection conn = null;
-                PreparedStatement st = null;
-                ResultSet rs = null;
-                try {
-                    conn = DatabaseConnection.getConnection();
-                    String sql = "SELECT * FROM Admins WHERE email=? AND password=?";
-                    st = conn.prepareStatement(sql);
+                Boolean status = false;
+		try {
+                    Connection con = DatabaseConnection.getConnection();
+                    String sql = "select * from Admins where email=? and password=?";
+                    PreparedStatement st = con.prepareStatement(sql);
 
                     st.setString(1, textField.getText());
-                    st.setString(2, new String(passwordField.getPassword())); // Convert password char array to string
+                    st.setString(2, passwordField.getText());
 
-                      rs = st.executeQuery();
-
+                    ResultSet rs = st.executeQuery();
                     if (rs.next()) {
                         this.setVisible(false);
                         new Loading().setVisible(true);
+                    } else
+			JOptionPane.showMessageDialog(null, "Invalid Login...!.");
 
-                    } else {
-                        JOptionPane.showMessageDialog(null, "Invalid Login...!.");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        if (rs != null) rs.close();
-                        if (st != null) st.close();
-                        if (conn != null) conn.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
+		} catch (Exception e2) {
+                    e2.printStackTrace();
+		}
             }
             if(ae.getSource() == b2){
                 setVisible(false);
@@ -126,8 +112,7 @@ public class Login_user extends JFrame implements ActionListener{
             }
             if(ae.getSource() == b3){
                 setVisible(false);
-//		Forgot forgot = new Forgot();
-//		forgot.setVisible(true);
+//
             }
         }
 

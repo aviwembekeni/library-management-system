@@ -143,25 +143,37 @@ public class AddBook extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
         if (ae.getSource() == b1) {
             if (validateInput()) {
-                try {
-                    Connection conn = DatabaseConnection.getConnection();
-                    String sql = "INSERT INTO Books(title, author, isbn, quantity, available) VALUES(?, ?, ?, ?, ?)";
-                    PreparedStatement st = conn.prepareStatement(sql);
-                    st.setString(1, bookTitle.getText());
-                    st.setString(2, author.getText());
-                    st.setString(3, isbn.getText());
-                    st.setInt(4, Integer.parseInt(quantity.getText()));
-                    st.setInt(5, Integer.parseInt(available.getText()));
+                try (Connection conn = DatabaseConnection.getConnection()) {
+                    String checkSql = "SELECT COUNT(*) FROM Books WHERE isbn = ?";
+                    PreparedStatement checkStmt = conn.prepareStatement(checkSql);
+                    checkStmt.setString(1, isbn.getText());
+                    ResultSet rsCheck = checkStmt.executeQuery();
+                    rsCheck.next();
+                    int count = rsCheck.getInt(1);
 
-                    int rs = st.executeUpdate();
-                    if (rs > 0) {
-                        JOptionPane.showMessageDialog(null, "Successfully Added");
-                        new Home().setVisible(true);
+                    if (count > 0) {
+                        JOptionPane.showMessageDialog(null, "This ISBN already exists in the database.", "Error", JOptionPane.ERROR_MESSAGE);
                     } else {
-                        JOptionPane.showMessageDialog(null, "Error");
+                        String sql = "INSERT INTO Books(title, author, isbn, quantity, available) VALUES(?, ?, ?, ?, ?)";
+                        PreparedStatement st = conn.prepareStatement(sql);
+                        st.setString(1, bookTitle.getText());
+                        st.setString(2, author.getText());
+                        st.setString(3, isbn.getText());
+                        st.setInt(4, Integer.parseInt(quantity.getText()));
+                        st.setInt(5, Integer.parseInt(available.getText()));
+
+                        int rs = st.executeUpdate();
+                        if (rs > 0) {
+                            JOptionPane.showMessageDialog(null, "Successfully Added");
+                            new Home().setVisible(true);
+                            this.setVisible(false);
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Error");
+                        }
+                        st.close();
                     }
-                    st.close();
-                    conn.close();
+                    rsCheck.close();
+                    checkStmt.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
